@@ -10,3 +10,4 @@ def debt_list(request):
         {'id': 1, 'friend_name': '田中', 'amount': 1000, 'reason': 'ランチ代'},
         {'id': 2, 'friend_name': '佐藤', 'amount': -500, 'reason': 'ジュース代'},
     ]
+    return JsonResponse(data, safe=False)
