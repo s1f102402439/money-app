@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'money_manager',
     'lending',
+    'rest_framework',
 ]
 
 MIDDLEWARE = [
