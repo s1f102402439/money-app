@@ -1,14 +1,9 @@
-from django.shortcuts import render
-
-# Create your views here.
-from django.http import JsonResponse
+# lending/views.py
+from rest_framework import generics
 from .models import Debt
+from .serializers import DebtSerializer
 
-# 画面からのアクセスを受け取る関数
-def debt_list(request):
-    # ★ 偽物のデータの代わりに、データベースから本物のデータを全部取ってくる！
-    # .values() をつけると、JSONにしやすい「辞書型」のリストにしてくれます
-    debts = list(Debt.objects.values())
-    
-    # JSON（データ）として返す
-    return JsonResponse(debts, safe=False)
+# 友達との割り勘や立て替えデータを一括で取得・登録するための受付窓口
+class DebtListCreate(generics.ListCreateAPIView):
+    queryset = Debt.objects.all()
+    serializer_class = DebtSerializer
