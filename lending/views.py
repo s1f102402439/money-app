@@ -1,14 +1,20 @@
-from django.shortcuts import render
-
-# Create your views here.
-from django.http import JsonResponse
+# lending/views.py
+from rest_framework import generics, filters
 from .models import Debt
+from .serializers import DebtSerializer
 
-# 画面からのアクセスを受け取る関数
-def debt_list(request):
-    # ★ 偽物のデータの代わりに、データベースから本物のデータを全部取ってくる！
-    # .values() をつけると、JSONにしやすい「辞書型」のリストにしてくれます
-    debts = list(Debt.objects.values())
+# ▼ 今まであった窓口（一覧と追加）
+class DebtListCreate(generics.ListCreateAPIView):
+    queryset = Debt.objects.all()
+    serializer_class = DebtSerializer
+    # 1. この窓口に「検索係」を配置する
+    filter_backends = [filters.SearchFilter]
     
-    # JSON（データ）として返す
-    return JsonResponse(debts, safe=False)
+    # 2. 「どの項目」を検索の対象にするかを指定する
+    # （例：名前や理由で検索できるようにする）
+    search_fields = ['friend_name', 'reason']
+
+# ▼ 【今回新しく追加する窓口】（個別のデータを「見る・更新する・削除する」専用）
+class DebtRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
+    queryset = Debt.objects.all()
+    serializer_class = DebtSerializer
