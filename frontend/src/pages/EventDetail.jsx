@@ -70,11 +70,14 @@ export default function EventDetail() {
       </main>
 
       {/* ＝ 右下：フローティングアクションボタン（＋ボタン） ＝ */}
-      {/* 💡ちょっとしたUXの工夫：精算タブ（settle）の時は「追加」しないので隠す！ */}
+      {/* 変更前： <button className="fixed ..."> ＋ </button> */}
       {activeTab !== "settle" && (
-        <button className="fixed bottom-20 right-6 w-14 h-14 bg-blue-600 rounded-full shadow-lg flex justify-center items-center text-white text-3xl hover:bg-blue-700 hover:scale-105 transition-all">
+        <Link 
+          to="/add" 
+          className="fixed bottom-20 right-6 w-14 h-14 bg-blue-600 rounded-full shadow-lg flex justify-center items-center text-white text-3xl hover:bg-blue-700 hover:scale-105 transition-all pb-1"
+        >
           ＋
-        </button>
+        </Link>
       )}
 
       {/* ＝ 最下部：ボトムナビゲーション（固定） ＝ */}
