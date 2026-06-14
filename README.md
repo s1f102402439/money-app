@@ -1,4 +1,4 @@
-# 💰 Debt Settlement Optimizer
+# 💰 PayMate - Debt Settlement Optimizer
 
 旅行や日常の貸し借り記録を管理し、グループ内の複雑な精算を最小限の送金回数で解決するフルスタックWebアプリケーションです。
 
