@@ -22,3 +22,30 @@ class Debt(models.Model):
         if self.foreign_currency != "JPY":
             return f"{self.friend_name} - {self.amount}円 ({self.foreign_amount}{self.foreign_currency})"
         return f"{self.friend_name} - {self.amount}円"
+
+# 既存のモデル（Debtなど）の下に追記します
+class ExchangeRate(models.Model):
+    """為替レートキャッシュ保存用モデル"""
+
+    currency_code = models.CharField(
+        max_length=3,
+        unique=True,
+        verbose_name="通貨コード",
+        help_text="例: USD, EUR",
+    )
+    rate = models.DecimalField(
+        max_digits=12,
+        decimal_places=6,
+        verbose_name="対円レート",
+        help_text="1外貨あたりの日本円 (JPY)",
+    )
+    fetched_at = models.DateTimeField(
+        auto_now=True, verbose_name="最終取得日時"
+    )
+
+    class Meta:
+        verbose_name = "為替レート"
+        verbose_name_plural = "為替レート一覧"
+
+    def __str__(self):
+        return f"1 {self.currency_code} = {self.rate} JPY ({self.fetched_at.strftime('%Y-%m-%d %H:%M')})"
