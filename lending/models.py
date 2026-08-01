@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Debt(models.Model):
     # 1. 友達の名前
     friend_name = models.CharField(max_length=50)
@@ -15,13 +16,31 @@ class Debt(models.Model):
 
     # 💡 外貨データを保存するフィールド
     foreign_currency = models.CharField(max_length=10, default="JPY")
-    foreign_amount = models.IntegerField(default=0)
+    foreign_amount = models.FloatField(default=0.0)
     exchange_rate = models.FloatField(default=1.0)
+
+    def save(self, *args, **kwargs):
+        currency_code = (self.foreign_currency or "JPY").strip().upper()
+        self.foreign_currency = currency_code
+
+        if currency_code == "JPY":
+            self.exchange_rate = 1.0
+            self.amount = int(float(self.foreign_amount or 0))
+        else:
+            if self.exchange_rate is None:
+                from .services import get_exchange_rate
+
+                self.exchange_rate = float(get_exchange_rate(currency_code))
+
+            self.amount = int(round(float(self.foreign_amount or 0) * float(self.exchange_rate)))
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         if self.foreign_currency != "JPY":
             return f"{self.friend_name} - {self.amount}円 ({self.foreign_amount}{self.foreign_currency})"
         return f"{self.friend_name} - {self.amount}円"
+
 
 # 既存のモデル（Debtなど）の下に追記します
 class ExchangeRate(models.Model):
