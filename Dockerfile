@@ -1,5 +1,5 @@
 # 1. ベースとなるOS（Pythonが入った軽量なLinux）を指定
-FROM python:3.11-slim
+FROM python:3.14-slim
 
 # 2. コンテナ内での作業場所（フォルダ）を決める
 WORKDIR /app
