@@ -39,7 +39,7 @@ jobs:
       # CIで使うPythonのバージョンを固定します。
       # pipのダウンロード結果を再利用して、2回目以降を速くします。
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
