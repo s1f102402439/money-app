@@ -1,0 +1,54 @@
+# Dependabotに「どの依存関係を、いつ確認するか」を伝える設定です。
+version: 2
+
+updates:
+  # requirements.txtに書かれたPythonパッケージを確認します。
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+
+  # frontend/package.jsonとpackage-lock.jsonのnpmパッケージを確認します。
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+
+  # ci.yml内で利用する公式Action自体の更新も確認します。
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+
+  # DockerfileのFROMで使うPythonイメージの更新を確認します。
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
+
+  # docker-compose.ymlで使うPostgreSQLイメージの更新を確認します。
+  # GitHubではDockerfileとComposeが別のecosystemとして扱われます。
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    open-pull-requests-limit: 5
