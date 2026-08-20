@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from django.test import TestCase
+from django.urls import reverse
 
 from .models import Debt
 
@@ -47,3 +48,23 @@ class DebtSaveTests(TestCase):
 
         self.assertEqual(debt.exchange_rate, 145.5)
         self.assertEqual(debt.amount, 1819)
+
+
+class DebtApiTests(TestCase):
+    def test_create_debt_through_relative_api_route(self):
+        response = self.client.post(
+            reverse("debt_list"),
+            data={
+                "friend_name": "Alice",
+                "amount": 1200,
+                "reason": "Lunch",
+                "foreign_currency": "JPY",
+                "foreign_amount": 1200,
+                "exchange_rate": 1,
+            },
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["amount"], 1200)
+        self.assertEqual(Debt.objects.count(), 1)
