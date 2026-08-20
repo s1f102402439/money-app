@@ -1,5 +1,5 @@
 // src/pages/AddExpense.jsx
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 export default function AddExpense({ onAddRecord }) {
@@ -31,11 +31,9 @@ export default function AddExpense({ onAddRecord }) {
       : 0;
   const isMultiManual = !isAutoSplit && activeOthers.length > 1;
 
-  // 💡【外貨機能】外貨額やレートが変わったときに自動で日本円（amount）を計算するフック
-  useEffect(() => {
-    if (currency === "JPY") return;
-    const fAmount = parseFloat(foreignAmount) || 0;
-    const rate = parseFloat(exchangeRate) || 0;
+  const updateConvertedAmount = (nextForeignAmount, nextExchangeRate) => {
+    const fAmount = Number(nextForeignAmount) || 0;
+    const rate = Number(nextExchangeRate) || 0;
     const calculatedJpy = Math.round(fAmount * rate);
 
     setAmount(calculatedJpy > 0 ? String(calculatedJpy) : "");
@@ -53,7 +51,37 @@ export default function AddExpense({ onAddRecord }) {
         ),
       );
     }
-  }, [foreignAmount, exchangeRate, currency]);
+  };
+
+  const handleCurrencyChange = (e) => {
+    const selected = e.target.value;
+    const defaultRates = {
+      JPY: 1,
+      PHP: 2.65,
+      USD: 155,
+    };
+    const nextRate = defaultRates[selected] ?? 1;
+
+    setCurrency(selected);
+    setExchangeRate(nextRate);
+    if (selected === "JPY") {
+      setForeignAmount("");
+    } else {
+      updateConvertedAmount(foreignAmount, nextRate);
+    }
+  };
+
+  const handleForeignAmountChange = (e) => {
+    const nextForeignAmount = e.target.value;
+    setForeignAmount(nextForeignAmount);
+    updateConvertedAmount(nextForeignAmount, exchangeRate);
+  };
+
+  const handleExchangeRateChange = (e) => {
+    const nextExchangeRate = e.target.value;
+    setExchangeRate(nextExchangeRate);
+    updateConvertedAmount(foreignAmount, nextExchangeRate);
+  };
 
   const handleAmountChange = (e) => {
     const val = e.target.value;
@@ -153,7 +181,7 @@ export default function AddExpense({ onAddRecord }) {
       alert("何に使ったかを入力してください。");
       return;
     }
-    if (activeMembers.length === 0) {
+    if (activeOthers.length === 0) {
       alert("記録する相手を追加してください。");
       return;
     }
@@ -161,6 +189,7 @@ export default function AddExpense({ onAddRecord }) {
     try {
       // 登録対象の相手リスト（自分以外）
       const validOthers = activeMembers.filter((m) => m.id !== 1);
+      let lastCreatedRecord = null;
 
       // 人数分ループしてバックエンド（Django API）へ連続送信
       for (const member of validOthers) {
@@ -176,16 +205,19 @@ export default function AddExpense({ onAddRecord }) {
         if (memberAmount <= 0) continue;
 
         // Djangoへ送るデータの作成（復元した外貨データを含める！）
+        const numericExchangeRate = Number(exchangeRate) || 1;
+        const memberForeignAmount =
+          currency === "JPY" ? memberAmount : memberAmount / numericExchangeRate;
         const payload = {
           friend_name: member.name,
           amount: memberAmount, // 日本円換算額
           reason: title,
           foreign_currency: currency,
-          foreign_amount: currency !== "JPY" ? Number(foreignAmount) || 0 : 0,
-          exchange_rate: currency !== "JPY" ? Number(exchangeRate) || 1.0 : 1.0,
+          foreign_amount: memberForeignAmount,
+          exchange_rate: currency !== "JPY" ? numericExchangeRate : 1,
         };
 
-        const res = await fetch("http://127.0.0.1:8000/api/debts/", {
+        const res = await fetch("/api/debts/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -194,12 +226,13 @@ export default function AddExpense({ onAddRecord }) {
         if (!res.ok) {
           throw new Error("Djangoへの保存に失敗しました");
         }
+        lastCreatedRecord = await res.json();
       }
 
       // ローカル側の表示用State更新（存在する場合）
-      if (onAddRecord) {
+      if (onAddRecord && lastCreatedRecord) {
         onAddRecord({
-          id: Date.now(),
+          id: lastCreatedRecord?.id,
           name: title,
           date: "今日",
           balance: Number(amount),
@@ -237,13 +270,7 @@ export default function AddExpense({ onAddRecord }) {
             </label>
             <select
               value={currency}
-              onChange={(e) => {
-                const selected = e.target.value;
-                setCurrency(selected);
-                if (selected === "JPY") setExchangeRate(1.0);
-                if (selected === "PHP") setExchangeRate(2.65); // ペソのデフォルトレート例
-                if (selected === "USD") setExchangeRate(155.0); // ドルのデフォルトレート例
-              }}
+              onChange={handleCurrencyChange}
               className="w-full bg-white border border-blue-200 rounded-lg py-2 px-3 font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-3"
             >
               <option value="JPY">🇯🇵 日本円 (JPY)</option>
@@ -260,7 +287,7 @@ export default function AddExpense({ onAddRecord }) {
                   <input
                     type="number"
                     value={foreignAmount}
-                    onChange={(e) => setForeignAmount(e.target.value)}
+                    onChange={handleForeignAmountChange}
                     placeholder="例: 500"
                     className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-sm font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -273,7 +300,7 @@ export default function AddExpense({ onAddRecord }) {
                     type="number"
                     step="0.01"
                     value={exchangeRate}
-                    onChange={(e) => setExchangeRate(e.target.value)}
+                    onChange={handleExchangeRateChange}
                     className="w-full bg-white border border-gray-300 rounded-lg py-2 px-3 text-sm font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>

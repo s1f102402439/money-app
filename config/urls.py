@@ -19,6 +19,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # 「lending/」から始まるURLが来たら、lendingアプリのurls.pyに丸投げする
-    path('lending/', include('lending.urls')),
+    # Reactからは同一オリジンの相対URL /api/... でアクセスする。
+    path('api/', include('lending.urls')),
 ]
