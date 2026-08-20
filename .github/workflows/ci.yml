@@ -34,7 +34,7 @@ jobs:
     steps:
       # GitHub上の仮想マシンへ、このリポジトリのコードを取り出します。
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # CIで使うPythonのバージョンを固定します。
       # pipのダウンロード結果を再利用して、2回目以降を速くします。
@@ -81,7 +81,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # READMEで推奨しているNode.js 22をCIでも使用します。
       # package-lock.jsonをもとにnpmのダウンロード結果も再利用します。
