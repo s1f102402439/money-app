@@ -3,7 +3,7 @@
 version: 2
 
 updates:
-  # requirements.txtに書かれたPythonパッケージを確認します。
+  # requirements.in（希望範囲）とpip-compileで固定したrequirements.txtを確認します。
   - package-ecosystem: pip
     directory: /
     schedule:
@@ -11,6 +11,9 @@ updates:
       time: "09:00"
       timezone: Asia/Tokyo
     open-pull-requests-limit: 2
+    # 現在の希望範囲が新版を許可していれば、下限をむやみに引き上げず
+    # requirements.txtの固定版だけを更新します。範囲外のときだけ.inも変更します。
+    versioning-strategy: increase-if-necessary
     groups:
       python-minor-and-patch:
         patterns:

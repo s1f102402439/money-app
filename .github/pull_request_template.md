@@ -16,8 +16,10 @@
 - [ ] `python manage.py check`
 - [ ] `python manage.py makemigrations --check --dry-run`
 - [ ] `python manage.py test`
+- [ ] Python依存関係を変更した場合、`requirements.txt`を再生成した
 - [ ] `cd frontend && npm run lint`
 - [ ] `cd frontend && npm run build`
+- [ ] GitHub ActionsのSQLite・PostgreSQL検査が成功した
 - [ ] 変更した画面・APIを手動で確認した
 
 ## PayMate固有の確認

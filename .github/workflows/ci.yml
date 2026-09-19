@@ -27,17 +27,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  backend:
-    name: Backend / Django
+  dependency-lock:
+    name: Python dependencies / Lock file
     runs-on: ubuntu-latest
 
     steps:
-      # GitHub上の仮想マシンへ、このリポジトリのコードを取り出します。
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      # CIで使うPythonのバージョンを固定します。
-      # pipのダウンロード結果を再利用して、2回目以降を速くします。
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.in
+
+      # Dependabotが対応するpip-tools 7.5.3で固定結果を再生成します。
+      - name: Install dependency compiler
+        run: python -m pip install pip-tools==7.5.3
+
+      # requirements.inを変更したのにrequirements.txtを更新し忘れた場合、
+      # 再生成後のgit diffが残るため、この検査が失敗します。
+      - name: Check compiled dependency lock
+        run: |
+          pip-compile --strip-extras --output-file=requirements.txt requirements.in
+          git diff --exit-code -- requirements.txt
+
+  backend-sqlite:
+    name: Backend / Django (SQLite)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
@@ -68,6 +91,66 @@ jobs:
         env:
           DJANGO_SECRET_KEY: ci-only-not-for-production
           DJANGO_DEBUG: "false"
+        run: python manage.py test
+
+  backend-postgresql:
+    name: Backend / Django (PostgreSQL 15)
+    runs-on: ubuntu-latest
+
+    # GitHub Actions内に一時的なPostgreSQLを起動します。
+    # health checkが通るまで、下のDjango検査は始まりません。
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: paymate_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d paymate_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    # POSTGRES_HOSTがあると、config/settings.pyはSQLiteではなくPostgreSQLを選びます。
+    env:
+      DJANGO_SECRET_KEY: ci-only-not-for-production
+      DJANGO_DEBUG: "false"
+      POSTGRES_NAME: paymate_ci
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: "5432"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+
+      # migrateが成功すれば、psycopg経由でPostgreSQLへ接続し、
+      # 現在のテーブル定義を実際に適用できることも確認できます。
+      - name: Apply migrations to PostgreSQL
+        run: python manage.py migrate --noinput
+
+      - name: Check Django settings
+        run: python manage.py check
+
+      - name: Check for missing migrations
+        run: python manage.py makemigrations --check --dry-run
+
+      # Djangoはテスト専用DBをPostgreSQL内に作成して検査後に削除します。
+      - name: Run Django tests
         run: python manage.py test
 
   frontend:
