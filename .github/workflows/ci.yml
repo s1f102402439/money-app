@@ -50,6 +50,10 @@ jobs:
       # requirements.inを変更したのにrequirements.txtを更新し忘れた場合、
       # 再生成後のgit diffが残るため、この検査が失敗します。
       - name: Check compiled dependency lock
+        # キャッシュ利用時に内部追加される--no-indexを生成履歴へ出さず、
+        # ローカルとCIでヘッダーを同じ表記にします。
+        env:
+          CUSTOM_COMPILE_COMMAND: pip-compile --output-file=requirements.txt --strip-extras requirements.in
         run: |
           pip-compile --strip-extras --output-file=requirements.txt requirements.in
           git diff --exit-code -- requirements.txt
