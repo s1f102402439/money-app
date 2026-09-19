@@ -65,12 +65,12 @@ Pythonパッケージは、役割の異なる2つのファイルで管理しま�
 通常の起動では、固定済みの `requirements.txt` からインストールします。依存関係を追加・変更するときだけ `requirements.in` を編集し、次のコマンドで固定結果を再生成します。`requirements.txt` は生成物なので、手作業では編集しません。
 
 ```bash
-python -m pip install pip-tools==7.5.3
+python -m pip install pip==26.1.1 pip-tools==7.5.3
 pip-compile --strip-extras --output-file=requirements.txt requirements.in
 python -m pip install -r requirements.txt
 ```
 
-CIでも同じ再生成を行い、コミット済みの `requirements.txt` と差がないことを確認します。これにより、希望範囲だけを変えて固定結果を更新し忘れる事故を防ぎます。
+`pip-tools` は依存関係を決めるために `pip` の内部機能を使うため、生成に使う2つの道具も動作確認済みの組み合わせへ固定しています。CIでも同じ再生成を行い、コミット済みの `requirements.txt` と差がないことを確認します。これにより、希望範囲だけを変えて固定結果を更新し忘れる事故を防ぎます。
 
 ### 2. React
 

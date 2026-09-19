@@ -42,9 +42,10 @@ jobs:
           cache: pip
           cache-dependency-path: requirements.in
 
-      # Dependabotが対応するpip-tools 7.5.3で固定結果を再生成します。
+      # Dependabotが対応する組み合わせで固定結果を再生成します。
+      # pip-toolsはpipの内部APIを使うため、生成ツール側のpipも固定します。
       - name: Install dependency compiler
-        run: python -m pip install pip-tools==7.5.3
+        run: python -m pip install pip==26.1.1 pip-tools==7.5.3
 
       # requirements.inを変更したのにrequirements.txtを更新し忘れた場合、
       # 再生成後のgit diffが残るため、この検査が失敗します。
