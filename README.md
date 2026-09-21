@@ -55,6 +55,23 @@ python manage.py runserver
 
 Django APIは `http://127.0.0.1:8000/api/debts/` で確認できます。ローカルでは `POSTGRES_HOST` を設定しない限りSQLiteを使います。
 
+### Python依存関係の管理
+
+Pythonパッケージは、役割の異なる2つのファイルで管理します。
+
+- `requirements.in`: 開発者が直接選んだパッケージと、許可するバージョン範囲
+- `requirements.txt`: `pip-compile`が間接依存も含めて決めた、実際にインストールする固定版
+
+通常の起動では、固定済みの `requirements.txt` からインストールします。依存関係を追加・変更するときだけ `requirements.in` を編集し、次のコマンドで固定結果を再生成します。`requirements.txt` は生成物なので、手作業では編集しません。
+
+```bash
+python -m pip install pip==26.1.1 pip-tools==7.5.3
+pip-compile --strip-extras --output-file=requirements.txt requirements.in
+python -m pip install -r requirements.txt
+```
+
+`pip-tools` は依存関係を決めるために `pip` の内部機能を使うため、生成に使う2つの道具も動作確認済みの組み合わせへ固定しています。CIでも同じ再生成を行い、コミット済みの `requirements.txt` と差がないことを確認します。これにより、希望範囲だけを変えて固定結果を更新し忘れる事故を防ぎます。
+
 ### 2. React
 
 別のターミナルで実行します。
@@ -105,12 +122,14 @@ npm run build
 2. ローカルで変更と検査を行う
 3. commitしてGitHubへpushする
 4. `main` 向けのPull Requestを作る
-5. GitHub Actionsの `Backend / Django` と `Frontend / React` が成功したことを確認する
+5. GitHub Actionsの依存固定、SQLite、PostgreSQL、Reactの検査がすべて成功したことを確認する
 6. 差分とレビュー結果を確認してから `main` へ取り込む
 
 Pull Requestを作ると、確認項目を書き残すためのテンプレートが表示されます。GitHub ActionsはPull Requestの作成・更新時と、`main` への取り込み後に自動検査を行います。
 
-Dependabotは毎月1日の午前9時（日本時間）にPython、npm、GitHub Actionsの依存関係を確認します。minor・patch更新は種類ごとにまとめ、同時に開く通常更新PRを抑えます。Dockerイメージの通常更新は、Dockerを検査するCIができるまで停止します。更新用Pull Requestが作られても自動では取り込まず、変更内容とCI結果を確認してから判断します。
+Dependabotは毎月1日の午前9時（日本時間）にPython、npm、GitHub Actionsの依存関係を確認します。Pythonでは `requirements.in` と固定済み `requirements.txt` を組として扱います。現在の希望範囲が新版を許可していれば固定版だけを更新し、範囲を広げる必要がある場合だけ `.in` も変更します。minor・patch更新は種類ごとにまとめ、同時に開く通常更新PRを抑えます。Dockerイメージの通常更新は、Dockerを検査するCIができるまで停止します。更新用Pull Requestが作られても自動では取り込まず、変更内容とCI結果を確認してから判断します。
+
+CIのバックエンド検査は2系統です。SQLiteは普段の軽いローカル開発との互換性を、PostgreSQL 15は本番用DBへ接続してmigrationとテストが通ることを確認します。両方を残すことで、SQLiteでは見つからないSQLや制約の違いを、mainへ取り込む前に検出できます。
 
 ## 環境変数
 
